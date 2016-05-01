@@ -19,6 +19,13 @@ public class MainFrame extends JFrame {
 		//setIconImage(Params.iconeAplicacao());
 		setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
 		
+		//menu
+		/*JMenuBar menuBar = new JMenuBar();
+		setJMenuBar(menuBar);
+		JMenu mnOpcao = new JMenu("Opções");
+		menuBar.add(mnOpcao);
+		mnOpcao.add(new JMenuItem(new CartaoAction(this)));*/
+		
 		InternalUI inicial = new InicialUI();
 		inicial.show();
 		inicial.grabFocus();

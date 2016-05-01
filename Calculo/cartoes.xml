@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<maquinas>
+	<maquina nome="cielo">
+		<tipo>
+			<nome>debito</nome>
+			<taxa>2.2</taxa>
+		</tipo>
+		<tipo>
+			<nome>crédito</nome>
+			<taxa>4.2</taxa>
+		</tipo>
+		<tipo>
+			<nome>voucher</nome>
+			<taxa>5.2</taxa>
+		</tipo>
+	</maquina>
+	<maquina nome="rede">
+		<tipo>
+			<nome>debito</nome>
+			<taxa>2.2</taxa>
+		</tipo>
+		<tipo>
+			<nome>crédito</nome>
+			<taxa>4.2</taxa>
+		</tipo>
+		<tipo>
+			<nome>voucher</nome>
+			<taxa>5.2</taxa>
+		</tipo>
+	</maquina>
+</maquinas>

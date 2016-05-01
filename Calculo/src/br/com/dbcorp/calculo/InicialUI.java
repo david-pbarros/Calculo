@@ -6,26 +6,41 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.ParseException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
 
 import com.jgoodies.forms.layout.ColumnSpec;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.FormSpecs;
 import com.jgoodies.forms.layout.RowSpec;
 
-public class InicialUI extends InternalUI implements FocusListener, ActionListener, KeyListener {
+import br.com.dbcorp.calculo.cartao.Maquina;
+import br.com.dbcorp.calculo.cartao.Maquinas;
+import br.com.dbcorp.calculo.cartao.Tipo;
+
+public class InicialUI extends InternalUI implements FocusListener, ActionListener, KeyListener, ItemListener {
 	private static final long serialVersionUID = 7068067565699504965L;
 	
 	private JTextField txTotal;
@@ -45,6 +60,12 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 	private JTextField txCem;
 	private JTextField txSub;
 	private JList<String> cartaoList;
+	private JList<String> tpCartaoList;
+	private JList<String> vlTpCartaoList;
+	private JList<String> taxasList;
+
+	private JComboBox<String> cbMaquina;
+	private JComboBox<String> cbTipoCartao;
 	
 	private JButton btnRemoverCar;
 	private JButton btnAddSub;
@@ -56,14 +77,34 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 	
 	private DecimalFormat decFormat;
 	
+	private Maquinas maquinas;
+	private Maquina maquinaSelecionada;
+	private Set<String> tiposCartoes;
+	private JTextField txtTaxaCartao;
+	
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public InicialUI() {
-		
 		this.setPreferredSize(new Dimension(824, 768));
 		
 		getContentPane();
 		getContentPane().setLayout(new BorderLayout(0, 0));
 		
 		this.decFormat = new DecimalFormat("##,##0.00");
+		
+		this.preparaCartoes();
+		
+		this.tiposCartoes = new HashSet<>();
+		String[] nomeMaquina = new String[this.maquinas.getMaquina().size()+1];
+		nomeMaquina[0] = "Selecione...";
+		
+		for (int i = 0; i < this.maquinas.getMaquina().size(); i++) {
+			nomeMaquina[i + 1] = this.maquinas.getMaquina().get(i).getNome();
+			
+			for (Tipo tipo : this.maquinas.getMaquina().get(i).getTipos()) {
+				this.tiposCartoes.add(tipo.getNome());
+			}
+		}
 		
 		JPanel totaisPanel = new JPanel();
 		totaisPanel.setBorder(new TitledBorder(null, "Totais", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -84,14 +125,23 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 				FormSpecs.RELATED_GAP_COLSPEC,},
 			new RowSpec[] {
 				FormSpecs.RELATED_GAP_ROWSPEC,
-				FormSpecs.DEFAULT_ROWSPEC,}));
+				FormSpecs.DEFAULT_ROWSPEC,
+				FormSpecs.RELATED_GAP_ROWSPEC,
+				RowSpec.decode("default:grow"),}));
 		
 		this.txTotal = new JTextField("0,00");
 		this.txTotalDinheiro = new JTextField("0,00");
 		this.txTotalCartao = new JTextField("0,00");
+		this.tpCartaoList = new JList(this.tiposCartoes.toArray());
+		this.vlTpCartaoList = new JList(new DefaultListModel<String>());
+		this.taxasList = new JList(new DefaultListModel<String>());
+		this.txtTaxaCartao = new JTextField();
+
 		this.txTotal.setEditable(false);
 		this.txTotalDinheiro.setEditable(false);
 		this.txTotalCartao.setEditable(false);
+		this.tpCartaoList.setEnabled(false);
+		this.txtTaxaCartao.setEditable(false);
 		
 		totaisPanel.add(new JLabel("Total Geral:"), "2, 2, right, default");
 		totaisPanel.add(this.txTotal, "4, 2, fill, default");
@@ -99,6 +149,12 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		totaisPanel.add(this.txTotalDinheiro, "8, 2, fill, default");
 		totaisPanel.add(new JLabel("Total Cart\u00E3o:"), "10, 2, right, default");
 		totaisPanel.add(this.txTotalCartao, "12, 2, fill, default");
+		totaisPanel.add(this.tpCartaoList, "2, 4, right, fill");
+		totaisPanel.add(this.vlTpCartaoList, "4, 4, fill, fill");
+		totaisPanel.add(new JLabel("Taxas:"), "6, 4, right, default");
+		totaisPanel.add(this.taxasList, "8, 4, fill, fill");
+		totaisPanel.add(new JLabel("Total Tx. Cart:"), "10, 4, right, default");
+		totaisPanel.add(this.txtTaxaCartao, "12, 4, fill, default");
 		
 		JPanel cartaoPanel = new JPanel();
 		cartaoPanel.setBorder(new TitledBorder(null, "Cart\u00E3o", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -112,6 +168,10 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 				FormSpecs.RELATED_GAP_ROWSPEC,
 				FormSpecs.DEFAULT_ROWSPEC,
 				FormSpecs.RELATED_GAP_ROWSPEC,
+				FormSpecs.DEFAULT_ROWSPEC,
+				FormSpecs.RELATED_GAP_ROWSPEC,
+				FormSpecs.DEFAULT_ROWSPEC,
+				FormSpecs.RELATED_GAP_ROWSPEC,
 				RowSpec.decode("default:grow"),
 				FormSpecs.RELATED_GAP_ROWSPEC,
 				FormSpecs.DEFAULT_ROWSPEC,}));
@@ -119,14 +179,22 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		this.txCartao = new JTextField("0,00");
 		this.cartaoList = new JList<String>(new DefaultListModel<String>());
 		this.btnRemoverCar = new JButton("Remover");
+		this.cbMaquina = new JComboBox(nomeMaquina);
+		this.cbTipoCartao = new JComboBox();
 		
 		this.txCartao.addKeyListener(this);
 		this.btnRemoverCar.addActionListener(this);
+		this.cbMaquina.addItemListener(this);
+		this.cbTipoCartao.addItemListener(this);
 
-		cartaoPanel.add(new JLabel("Valor:"), "2, 2, right, default");
-		cartaoPanel.add(this.txCartao, "4, 2, fill, default");
-		cartaoPanel.add(this.cartaoList, "2, 4, 3, 1, fill, fill");
-		cartaoPanel.add(this.btnRemoverCar, "2, 6, 3, 1");
+		cartaoPanel.add(new JLabel("Maquina:"), "2, 2, right, default");
+		cartaoPanel.add(this.cbMaquina, "4, 2, fill, default");
+		cartaoPanel.add(new JLabel("Tipo:"), "2, 4, right, default");
+		cartaoPanel.add(this.cbTipoCartao, "4, 4, fill, default");
+		cartaoPanel.add(new JLabel("Valor:"), "2, 6, right, default");
+		cartaoPanel.add(this.txCartao, "4, 6, fill, default");
+		cartaoPanel.add(this.cartaoList, "2, 8, 3, 1, fill, fill");
+		cartaoPanel.add(this.btnRemoverCar, "2, 10, 3, 1");
 		
 		JPanel dinheiroPanel = new JPanel();
 		dinheiroPanel.setBorder(new TitledBorder(null, "Dinheiro", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -320,8 +388,62 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 				this.txTotalCartao.setText(this.decFormat.format(this.totalCartao));
 				this.txTotal.setText(this.decFormat.format(this.totalGeral));
 				
+				Double taxa = 0d;
+				Map<String, Double> valoresTipo = new HashMap<>();
+				Map<String, Double> taxasTipo = new HashMap<>();
+				
+				for (Maquina maquina : this.maquinas.getMaquina()) {
+					for (Tipo tipo : maquina.getTipos()) {
+						if (!valoresTipo.containsKey(tipo.getNome())) {
+							valoresTipo.put(tipo.getNome(), 0d);
+							taxasTipo.put(tipo.getNome(), 0d);
+						}
+						
+						for (int i = 0; i < tipo.getListaValores().size(); i++) {
+							double valor =  this.decFormat.parse(tipo.getListaValores().get(i)).doubleValue();
+							double taxaValor = valor * (tipo.getTaxa()/100);
+							
+							valoresTipo.put(tipo.getNome(), valoresTipo.get(tipo.getNome()) + valor);
+							taxasTipo.put(tipo.getNome(), taxaValor);
+							
+							taxa += taxaValor;
+						}
+					}
+				}
+				
+				((DefaultListModel<String>)this.vlTpCartaoList.getModel()).removeAllElements();
+				((DefaultListModel<String>)this.taxasList.getModel()).removeAllElements();
+				
+				for (String tipo : this.tiposCartoes) {
+					((DefaultListModel<String>)this.vlTpCartaoList.getModel()).addElement(this.decFormat.format(valoresTipo.get(tipo)));
+					((DefaultListModel<String>)this.taxasList.getModel()).addElement(this.decFormat.format(taxasTipo.get(tipo)));
+				}
+				
+				this.txtTaxaCartao.setText(this.decFormat.format(taxa));
+				
 			} catch (ParseException e) {
 				e.printStackTrace();
+			}
+		}
+	}
+	
+	//ItemListener
+	@Override
+	public void itemStateChanged(ItemEvent event) {
+		if (event.getSource() == this.cbMaquina) {
+			this.selecaoMaquina();
+		
+		} else if (event.getSource() == this.cbTipoCartao) {
+			Tipo tipo = null;
+			
+			for (Tipo temp : this.maquinaSelecionada.getTipos()) {
+				if (temp.getNome().equals(this.cbTipoCartao.getSelectedItem())) {
+					tipo = temp;
+				}
+			}
+			
+			if (tipo != null) {
+				this.cartaoList.setModel(tipo.getListaValores());
 			}
 		}
 	}
@@ -346,5 +468,36 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		this.txCinquenta.setText("0");
 		this.txCem.setText("0");
 		this.txSub.setText("0,00");
+	}
+	
+	private void preparaCartoes() {
+		try {
+			File file = Paths.get(".").toAbsolutePath().normalize().resolve("cartoes.xml").toFile();
+			JAXBContext jaxbContext = JAXBContext.newInstance(Maquinas.class);
+			
+			Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+			this.maquinas = (Maquinas) jaxbUnmarshaller.unmarshal(file);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void selecaoMaquina() {
+		for (Maquina temp : this.maquinas.getMaquina()) {
+			if (temp.getNome().equals(this.cbMaquina.getSelectedItem())) {
+				this.maquinaSelecionada = temp;
+				break;
+			}
+		}
+		
+		if (this.maquinaSelecionada != null) {
+			this.cbTipoCartao.removeAllItems();
+			this.cbTipoCartao.addItem("Selecione...");
+
+			for (Tipo tipo : this.maquinaSelecionada.getTipos()) {
+				this.cbTipoCartao.addItem(tipo.getNome());
+			}
+		}
 	}
 }
