@@ -39,6 +39,7 @@ import com.jgoodies.forms.layout.RowSpec;
 import br.com.dbcorp.calculo.cartao.Maquina;
 import br.com.dbcorp.calculo.cartao.Maquinas;
 import br.com.dbcorp.calculo.cartao.Tipo;
+import java.awt.Font;
 
 public class InicialUI extends InternalUI implements FocusListener, ActionListener, KeyListener, ItemListener {
 	private static final long serialVersionUID = 7068067565699504965L;
@@ -82,8 +83,9 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 	private Set<String> tiposCartoes;
 	private JTextField txtTaxaCartao;
 	
-	private Map<JTextField, Long> porValor;
-	
+	private Map<JTextField, JLabel> porValor;
+	private Map<JTextField, JLabel> paraMil;
+	private Map<JTextField, Double> campoValor;
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public InicialUI() {
@@ -229,6 +231,8 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 				FormSpecs.RELATED_GAP_ROWSPEC,
 				FormSpecs.DEFAULT_ROWSPEC,
 				FormSpecs.RELATED_GAP_ROWSPEC,
+				FormSpecs.DEFAULT_ROWSPEC,
+				FormSpecs.RELATED_GAP_ROWSPEC,
 				FormSpecs.DEFAULT_ROWSPEC,}));
 		
 		this.txCincoCent = new JTextField("0");
@@ -256,19 +260,6 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		this.txCinquenta.addFocusListener(this);
 		this.txCem.addFocusListener(this);
 		
-		this.porValor = new HashMap<>();
-		this.porValor.put(this.txCincoCent, 0l);
-		this.porValor.put(this.txDezCent, 0l);
-		this.porValor.put(this.txVinteCincoCent, 0l);
-		this.porValor.put(this.txCinqCent, 0l);
-		this.porValor.put(this.txUm, 0l);
-		this.porValor.put(this.txDois, 0l);
-		this.porValor.put(this.txCinco, 0l);
-		this.porValor.put(this.txDez, 0l);
-		this.porValor.put(this.txVinte, 0l);
-		this.porValor.put(this.txCinquenta, 0l);
-		this.porValor.put(this.txCem, 0l);
-		
 		JPanel btnPanel = new JPanel();
 
 		this.btnAddSub = new JButton("Adiciona Total");
@@ -282,7 +273,205 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		
 		btnPanel.add(btnAddSub);
 		btnPanel.add(btnRemover);
+		
+		JPanel notaPanel = new JPanel();
+		notaPanel.setBorder(new TitledBorder(null, "Totais de notas", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		notaPanel.setLayout(new FormLayout(new ColumnSpec[] {
+				FormSpecs.DEFAULT_COLSPEC,
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("center:max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("right:max(10dlu;default)"),},
+			new RowSpec[] {
+				FormSpecs.DEFAULT_ROWSPEC,
+				FormSpecs.RELATED_GAP_ROWSPEC,
+				FormSpecs.DEFAULT_ROWSPEC,}));
+		
+		JLabel lbTotCincoCent = new JLabel("0");
+		JLabel lbTotDezCent = new JLabel("0");
+		JLabel lbTotVinteCincoCent = new JLabel("0");
+		JLabel lbTotCinquentaCent = new JLabel("0");
+		JLabel lblTotUm = new JLabel("0");
+		JLabel lblTotDois = new JLabel("0");
+		lblTotDois.setHorizontalAlignment(SwingConstants.CENTER);
+		JLabel lbTotCinco = new JLabel("0");
+		JLabel lbTotDez = new JLabel("0");
+		JLabel lbTotVinte = new JLabel("0");
+		JLabel lbTotCinquenta = new JLabel("0");
+		JLabel lbTotCem = new JLabel("0");
 
+		Font fonte = new Font("Tahoma", Font.BOLD | Font.ITALIC, 11);
+		
+		lbTotCincoCent.setFont(fonte);
+		lbTotDezCent.setFont(fonte);
+		lbTotVinteCincoCent.setFont(fonte);
+		lbTotCinquentaCent.setFont(fonte);
+		lblTotUm.setFont(fonte);
+		lblTotDois.setFont(fonte);
+		lbTotCinco.setFont(fonte);
+		lbTotDez.setFont(fonte);
+		lbTotVinte.setFont(fonte);
+		lbTotCinquenta.setFont(fonte);
+		lbTotCem.setFont(fonte);
+		
+		notaPanel.add(new JLabel("0,05:"), "1, 1, left, top");
+		notaPanel.add(lbTotCincoCent, "3, 1, center, default");
+		notaPanel.add(new JLabel("0,10:"), "5, 1");
+		notaPanel.add(lbTotDezCent, "7, 1");
+		notaPanel.add(new JLabel("0,25:"), "9, 1");
+		notaPanel.add(lbTotVinteCincoCent, "11, 1");
+		notaPanel.add(new JLabel("0,50:"), "13, 1");
+		notaPanel.add(lbTotCinquentaCent, "15, 1");
+		notaPanel.add(new JLabel("1,00:"), "17, 1");
+		notaPanel.add(lblTotUm, "19, 1");
+		notaPanel.add(new JLabel("2,00:"), "1, 3");
+		notaPanel.add(lblTotDois, "3, 3, center, default");
+		notaPanel.add(new JLabel("5,00:"), "5, 3");
+		notaPanel.add(lbTotCinco, "7, 3");
+		notaPanel.add(new JLabel("10,00:"), "9, 3");
+		notaPanel.add(lbTotDez, "11, 3");
+		notaPanel.add(new JLabel("20,00:"), "13, 3");
+		notaPanel.add(lbTotVinte, "15, 3");
+		notaPanel.add(new JLabel("50,00:"), "17, 3");
+		notaPanel.add(lbTotCinquenta, "19, 3");
+		notaPanel.add(new JLabel("100,00:"), "21, 3");
+		notaPanel.add(lbTotCem, "23, 3");
+		
+		JPanel milPanel = new JPanel();
+		milPanel.setBorder(new TitledBorder(null, "Para Mil", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		milPanel.setLayout(new FormLayout(new ColumnSpec[] {
+				FormSpecs.DEFAULT_COLSPEC,
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("center:max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(10dlu;default)"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("right:max(10dlu;default)"),},
+			new RowSpec[] {
+				FormSpecs.DEFAULT_ROWSPEC,
+				FormSpecs.RELATED_GAP_ROWSPEC,
+				FormSpecs.DEFAULT_ROWSPEC,}));
+		
+		JLabel lbMilTotCincoCent = new JLabel("20000");
+		JLabel lbMilTotDezCent = new JLabel("10000");
+		JLabel lbMilTotVinteCincoCent = new JLabel("4000");
+		JLabel lbMilTotCinquentaCent = new JLabel("2000");
+		JLabel lbMilTotUm = new JLabel("1000");
+		JLabel lbMilTotDois = new JLabel("500");
+		JLabel lbMilTotCinco = new JLabel("200");
+		JLabel lbMilTotDez = new JLabel("100");
+		JLabel lbMilTotVinte = new JLabel("50");
+		JLabel lbMilTotCinquenta = new JLabel("20");
+		JLabel lbMilTotCem = new JLabel("10");
+
+		lbMilTotCincoCent.setFont(fonte);
+		lbMilTotDezCent.setFont(fonte);
+		lbMilTotVinteCincoCent.setFont(fonte);
+		lbMilTotCinquentaCent.setFont(fonte);
+		lbMilTotUm.setFont(fonte);
+		lbMilTotDois.setFont(fonte);
+		lbMilTotCinco.setFont(fonte);
+		lbMilTotDez.setFont(fonte);
+		lbMilTotVinte.setFont(fonte);
+		lbMilTotCinquenta.setFont(fonte);
+		lbMilTotCem.setFont(fonte);
+		
+		milPanel.add(new JLabel("0,05:"), "1, 1, left, top");
+		milPanel.add(lbMilTotCincoCent, "3, 1, center, default");
+		milPanel.add(new JLabel("0,10:"), "5, 1");
+		milPanel.add(lbMilTotDezCent, "7, 1");
+		milPanel.add(new JLabel("0,25:"), "9, 1");
+		milPanel.add(lbMilTotVinteCincoCent, "11, 1");
+		milPanel.add(new JLabel("0,50:"), "13, 1");
+		milPanel.add(lbMilTotCinquentaCent, "15, 1");
+		milPanel.add(new JLabel("1,00:"), "17, 1");
+		milPanel.add(lbMilTotUm, "19, 1");
+		milPanel.add(new JLabel("2,00:"), "1, 3");
+		milPanel.add(lbMilTotDois, "3, 3, center, default");
+		milPanel.add(new JLabel("5,00:"), "5, 3");
+		milPanel.add(lbMilTotCinco, "7, 3");
+		milPanel.add(new JLabel("10,00:"), "9, 3");
+		milPanel.add(lbMilTotDez, "11, 3");
+		milPanel.add(new JLabel("20,00:"), "13, 3");
+		milPanel.add(lbMilTotVinte, "15, 3");
+		milPanel.add(new JLabel("50,00:"), "17, 3");
+		milPanel.add(lbMilTotCinquenta, "19, 3");
+		milPanel.add(new JLabel("100,00:"), "21, 3");
+		milPanel.add(lbMilTotCem, "23, 3");
+		
+		this.porValor = new HashMap<>();
+		this.porValor.put(this.txCincoCent, lbTotCincoCent);
+		this.porValor.put(this.txDezCent, lbTotDezCent);
+		this.porValor.put(this.txVinteCincoCent, lbTotVinteCincoCent);
+		this.porValor.put(this.txCinqCent, lbTotCinquentaCent);
+		this.porValor.put(this.txUm, lblTotUm);
+		this.porValor.put(this.txDois, lblTotDois);
+		this.porValor.put(this.txCinco, lbTotCinco);
+		this.porValor.put(this.txDez, lbTotDez);
+		this.porValor.put(this.txVinte, lbTotVinte);
+		this.porValor.put(this.txCinquenta, lbTotCinquenta);
+		this.porValor.put(this.txCem, lbTotCem);
+		
+		this.paraMil = new HashMap<>();
+		this.paraMil.put(this.txCincoCent, lbMilTotCincoCent);
+		this.paraMil.put(this.txDezCent, lbMilTotDezCent);
+		this.paraMil.put(this.txVinteCincoCent, lbMilTotVinteCincoCent);
+		this.paraMil.put(this.txCinqCent, lbMilTotCinquentaCent);
+		this.paraMil.put(this.txUm, lbMilTotUm);
+		this.paraMil.put(this.txDois, lbMilTotDois);
+		this.paraMil.put(this.txCinco, lbMilTotCinco);
+		this.paraMil.put(this.txDez, lbMilTotDez);
+		this.paraMil.put(this.txVinte, lbMilTotVinte);
+		this.paraMil.put(this.txCinquenta, lbMilTotCinquenta);
+		this.paraMil.put(this.txCem, lbMilTotCem);
+		
+		this.campoValor = new HashMap<>();
+		this.campoValor.put(this.txCincoCent, 0.05);
+		this.campoValor.put(this.txDezCent, 0.10);
+		this.campoValor.put(this.txVinteCincoCent, 0.25);
+		this.campoValor.put(this.txCinqCent, 0.50);
+		this.campoValor.put(this.txUm, 1.0);
+		this.campoValor.put(this.txDois, 2.0);
+		this.campoValor.put(this.txCinco, 5.0);
+		this.campoValor.put(this.txDez, 10.0);
+		this.campoValor.put(this.txVinte, 20.0);
+		this.campoValor.put(this.txCinquenta, 50.0);
+		this.campoValor.put(this.txCem, 100.0);
+		
 		dinheiroPanel.add(new JLabel("0,05:"), "2, 2, right, default");
 		dinheiroPanel.add(this.txCincoCent, "4, 2, fill, top");
 		dinheiroPanel.add(new JLabel("0,10:"), "6, 2, right, default");
@@ -308,6 +497,8 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		dinheiroPanel.add(new JLabel("SubTotal:"), "2, 12, right, default");
 		dinheiroPanel.add(this.txSub, "4, 12, 5, 1, fill, default");
 		dinheiroPanel.add(btnPanel, "10, 12, 3, 1, fill, fill");
+		dinheiroPanel.add(notaPanel, "2, 14, 11, 1, fill, fill");
+		dinheiroPanel.add(milPanel, "2, 16, 11, 1, fill, fill");
 		
 		setVisible(true);
 	}
@@ -324,23 +515,21 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 	//FocusListener
 	@Override
 	public void focusLost(FocusEvent event) {
-		double cincCent = Long.parseLong(this.txCincoCent.getText()) * 0.05;
-		double dezCent = Long.parseLong(this.txDezCent.getText()) * 0.10;
-		double vinteCincoCent = Long.parseLong(this.txVinteCincoCent.getText()) * 0.25;
-		double cinqCent = Long.parseLong(this.txCinqCent.getText()) * 0.50;
-		double um = Long.parseLong(this.txUm.getText());
-		double dois = Long.parseLong(this.txDois.getText()) * 2;
-		double cinco = Long.parseLong(this.txCinco.getText()) * 5;
-		double dez = Long.parseLong(this.txDez.getText()) * 10;
-		double vinte = Long.parseLong(this.txVinte.getText()) * 20;
-		double cinq = Long.parseLong(this.txCinquenta.getText()) * 50;
-		double cem = Long.parseLong(this.txCem.getText()) * 100;
+		double subTotal = 0.0;
 		
-		this.porValor.put((JTextField)event.getSource(), this.porValor.get(event.getSource()) + Long.parseLong(((JTextField)event.getSource()).getText()));
-		
-		double subTotal = cincCent + dezCent + vinteCincoCent + cinqCent + um + dois + cinco + dez + vinte + cinq + cem;
+		for (JTextField field : this.campoValor.keySet()) {
+			subTotal += Long.parseLong(field.getText()) * this.campoValor.get(field);
+		}
 		
 		this.txSub.setText(this.decFormat.format(subTotal));
+		
+		//para mil
+		double faltante = 1000.0 - subTotal;
+		
+		for (JTextField field : this.paraMil.keySet()) {
+			Double temp = faltante / this.campoValor.get(field);
+			this.paraMil.get(field).setText(Integer.toString(temp.intValue()));
+		}
 	}
 
 	//ActionListener
@@ -361,6 +550,12 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 			this.txTotalDinheiro.setText(this.decFormat.format(this.totalDinheiro));
 			this.txTotal.setText(this.decFormat.format(this.totalGeral));
 			
+			for (JTextField field : this.porValor.keySet()) {
+				Integer total = Integer.parseInt(this.porValor.get(field).getText()) + Integer.parseInt(field.getText());
+				
+				this.porValor.get(field).setText(total.toString());
+			}
+			
 			this.resetDinheiro();
 		
 		} else if (event.getSource() == this.btnRemover) {
@@ -370,86 +565,16 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 			this.txTotalDinheiro.setText(this.decFormat.format(this.totalDinheiro));
 			this.txTotal.setText(this.decFormat.format(this.totalGeral));
 			
+			for (JTextField field : this.porValor.keySet()) {
+				Integer total = Integer.parseInt(this.porValor.get(field).getText()) - Integer.parseInt(field.getText());
+				
+				this.porValor.get(field).setText(total.toString());
+			}
+			
 			this.resetDinheiro();
 		
 		} else if (event.getSource() == this.btnRemoverCar) {
-			try {
-				double cartao = this.decFormat.parse(this.cartaoList.getSelectedValue()).doubleValue();
-				
-				((DefaultListModel<String>) this.cartaoList.getModel()).removeElementAt(this.cartaoList.getSelectedIndex());
-				
-				this.totalCartao -= cartao;
-				this.totalGeral -= cartao;
-				
-				this.txTotalCartao.setText(this.decFormat.format(this.totalCartao));
-				this.txTotal.setText(this.decFormat.format(this.totalGeral));
-				
-				int index = 0;
-				Tipo tipo = null;
-				
-				for (int i = 0; i < this.maquinaSelecionada.getTipos().size(); i++) {
-					if (this.cbTipoCartao.getSelectedItem().equals(this.maquinaSelecionada.getTipos().get(i).getNome())) {
-						tipo = this.maquinaSelecionada.getTipos().get(i);
-						
-						for (; index < this.tpCartaoList.getModel().getSize(); index++) {
-							if (tipo.getNome().equals(this.tpCartaoList.getModel().getElementAt(index))) {
-								break;
-							}
-						}
-						
-						break;
-					}
-				}
-				
-				if (tipo != null) {
-					double taxaValor = cartao * (tipo.getTaxa()/100);
-					
-					double temp = this.decFormat.parse(this.vlTpCartaoList.getModel().getElementAt(index)).doubleValue() - cartao;
-					
-					((DefaultListModel<String>)this.vlTpCartaoList.getModel()).setElementAt(this.decFormat.format(temp), index);
-					
-					temp = this.decFormat.parse(this.taxasList.getModel().getElementAt(index)).doubleValue() - taxaValor;
-					
-					((DefaultListModel<String>)this.taxasList.getModel()).setElementAt(this.decFormat.format(temp), index);
-					
-					this.txtTaxaCartao.setText(this.decFormat.format(this.decFormat.parse(this.txtTaxaCartao.getText()).doubleValue() - taxaValor));
-				}
-				
-				
-				/*Double taxa = 0d;
-				Map<String, Double> valoresTipo = new HashMap<>();
-				Map<String, Double> taxasTipo = new HashMap<>();
-				
-				for (Maquina maquina : this.maquinas.getMaquina()) {
-					for (Tipo tipo : maquina.getTipos()) {
-						if (!valoresTipo.containsKey(tipo.getNome())) {
-							valoresTipo.put(tipo.getNome(), 0d);
-							taxasTipo.put(tipo.getNome(), 0d);
-						}
-						
-						for (int i = 0; i < tipo.getListaValores().size(); i++) {
-							double taxaValor = cartao * (tipo.getTaxa()/100);
-							
-							valoresTipo.put(tipo.getNome(), valoresTipo.get(tipo.getNome()) - cartao);
-							taxasTipo.put(tipo.getNome(), taxasTipo.get(tipo.getNome()) - taxaValor);
-							
-							taxa -= taxaValor;
-						}
-					}
-				}
-				
-				((DefaultListModel<String>)this.vlTpCartaoList.getModel()).removeAllElements();
-				((DefaultListModel<String>)this.taxasList.getModel()).removeAllElements();
-				
-				for (String tipo : this.tiposCartoes) {
-					((DefaultListModel<String>)this.vlTpCartaoList.getModel()).addElement(this.decFormat.format(valoresTipo.get(tipo)));
-					((DefaultListModel<String>)this.taxasList.getModel()).addElement(this.decFormat.format(taxasTipo.get(tipo)));
-				}
-				
-				this.txtTaxaCartao.setText(this.decFormat.format(taxa));*/
-			} catch (ParseException e) {
-				e.printStackTrace();
-			}
+			this.removerCartao();
 		}
 	}
 
@@ -548,6 +673,12 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		this.txCinquenta.setText("0");
 		this.txCem.setText("0");
 		this.txSub.setText("0,00");
+		
+		for (JTextField field : this.paraMil.keySet()) {
+			Double temp = 1000 / this.campoValor.get(field);
+			
+			this.paraMil.get(field).setText(Integer.toString(temp.intValue()));
+		}
 	}
 	
 	private void preparaCartoes() {
@@ -578,6 +709,53 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 			for (Tipo tipo : this.maquinaSelecionada.getTipos()) {
 				this.cbTipoCartao.addItem(tipo.getNome());
 			}
+		}
+	}
+	
+	private void removerCartao() {
+		try {
+			double cartao = this.decFormat.parse(this.cartaoList.getSelectedValue()).doubleValue();
+			
+			((DefaultListModel<String>) this.cartaoList.getModel()).removeElementAt(this.cartaoList.getSelectedIndex());
+			
+			this.totalCartao -= cartao;
+			this.totalGeral -= cartao;
+			
+			this.txTotalCartao.setText(this.decFormat.format(this.totalCartao));
+			this.txTotal.setText(this.decFormat.format(this.totalGeral));
+			
+			int index = 0;
+			Tipo tipo = null;
+			
+			for (int i = 0; i < this.maquinaSelecionada.getTipos().size(); i++) {
+				if (this.cbTipoCartao.getSelectedItem().equals(this.maquinaSelecionada.getTipos().get(i).getNome())) {
+					tipo = this.maquinaSelecionada.getTipos().get(i);
+					
+					for (; index < this.tpCartaoList.getModel().getSize(); index++) {
+						if (tipo.getNome().equals(this.tpCartaoList.getModel().getElementAt(index))) {
+							break;
+						}
+					}
+					
+					break;
+				}
+			}
+			
+			if (tipo != null) {
+				double taxaValor = cartao * (tipo.getTaxa()/100);
+				
+				double temp = this.decFormat.parse(this.vlTpCartaoList.getModel().getElementAt(index)).doubleValue() - cartao;
+				
+				((DefaultListModel<String>)this.vlTpCartaoList.getModel()).setElementAt(this.decFormat.format(temp), index);
+				
+				temp = this.decFormat.parse(this.taxasList.getModel().getElementAt(index)).doubleValue() - taxaValor;
+				
+				((DefaultListModel<String>)this.taxasList.getModel()).setElementAt(this.decFormat.format(temp), index);
+				
+				this.txtTaxaCartao.setText(this.decFormat.format(this.decFormat.parse(this.txtTaxaCartao.getText()).doubleValue() - taxaValor));
+			}
+		} catch (ParseException e) {
+			e.printStackTrace();
 		}
 	}
 }
