@@ -82,6 +82,8 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 	private Set<String> tiposCartoes;
 	private JTextField txtTaxaCartao;
 	
+	private Map<JTextField, Long> porValor;
+	
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public InicialUI() {
@@ -254,6 +256,19 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		this.txCinquenta.addFocusListener(this);
 		this.txCem.addFocusListener(this);
 		
+		this.porValor = new HashMap<>();
+		this.porValor.put(this.txCincoCent, 0l);
+		this.porValor.put(this.txDezCent, 0l);
+		this.porValor.put(this.txVinteCincoCent, 0l);
+		this.porValor.put(this.txCinqCent, 0l);
+		this.porValor.put(this.txUm, 0l);
+		this.porValor.put(this.txDois, 0l);
+		this.porValor.put(this.txCinco, 0l);
+		this.porValor.put(this.txDez, 0l);
+		this.porValor.put(this.txVinte, 0l);
+		this.porValor.put(this.txCinquenta, 0l);
+		this.porValor.put(this.txCem, 0l);
+		
 		JPanel btnPanel = new JPanel();
 
 		this.btnAddSub = new JButton("Adiciona Total");
@@ -321,6 +336,8 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		double cinq = Long.parseLong(this.txCinquenta.getText()) * 50;
 		double cem = Long.parseLong(this.txCem.getText()) * 100;
 		
+		this.porValor.put((JTextField)event.getSource(), this.porValor.get(event.getSource()) + Long.parseLong(((JTextField)event.getSource()).getText()));
+		
 		double subTotal = cincCent + dezCent + vinteCincoCent + cinqCent + um + dois + cinco + dez + vinte + cinq + cem;
 		
 		this.txSub.setText(this.decFormat.format(subTotal));
@@ -367,6 +384,69 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 				this.txTotalCartao.setText(this.decFormat.format(this.totalCartao));
 				this.txTotal.setText(this.decFormat.format(this.totalGeral));
 				
+				int index = 0;
+				Tipo tipo = null;
+				
+				for (int i = 0; i < this.maquinaSelecionada.getTipos().size(); i++) {
+					if (this.cbTipoCartao.getSelectedItem().equals(this.maquinaSelecionada.getTipos().get(i).getNome())) {
+						tipo = this.maquinaSelecionada.getTipos().get(i);
+						
+						for (; index < this.tpCartaoList.getModel().getSize(); index++) {
+							if (tipo.getNome().equals(this.tpCartaoList.getModel().getElementAt(index))) {
+								break;
+							}
+						}
+						
+						break;
+					}
+				}
+				
+				if (tipo != null) {
+					double taxaValor = cartao * (tipo.getTaxa()/100);
+					
+					double temp = this.decFormat.parse(this.vlTpCartaoList.getModel().getElementAt(index)).doubleValue() - cartao;
+					
+					((DefaultListModel<String>)this.vlTpCartaoList.getModel()).setElementAt(this.decFormat.format(temp), index);
+					
+					temp = this.decFormat.parse(this.taxasList.getModel().getElementAt(index)).doubleValue() - taxaValor;
+					
+					((DefaultListModel<String>)this.taxasList.getModel()).setElementAt(this.decFormat.format(temp), index);
+					
+					this.txtTaxaCartao.setText(this.decFormat.format(this.decFormat.parse(this.txtTaxaCartao.getText()).doubleValue() - taxaValor));
+				}
+				
+				
+				/*Double taxa = 0d;
+				Map<String, Double> valoresTipo = new HashMap<>();
+				Map<String, Double> taxasTipo = new HashMap<>();
+				
+				for (Maquina maquina : this.maquinas.getMaquina()) {
+					for (Tipo tipo : maquina.getTipos()) {
+						if (!valoresTipo.containsKey(tipo.getNome())) {
+							valoresTipo.put(tipo.getNome(), 0d);
+							taxasTipo.put(tipo.getNome(), 0d);
+						}
+						
+						for (int i = 0; i < tipo.getListaValores().size(); i++) {
+							double taxaValor = cartao * (tipo.getTaxa()/100);
+							
+							valoresTipo.put(tipo.getNome(), valoresTipo.get(tipo.getNome()) - cartao);
+							taxasTipo.put(tipo.getNome(), taxasTipo.get(tipo.getNome()) - taxaValor);
+							
+							taxa -= taxaValor;
+						}
+					}
+				}
+				
+				((DefaultListModel<String>)this.vlTpCartaoList.getModel()).removeAllElements();
+				((DefaultListModel<String>)this.taxasList.getModel()).removeAllElements();
+				
+				for (String tipo : this.tiposCartoes) {
+					((DefaultListModel<String>)this.vlTpCartaoList.getModel()).addElement(this.decFormat.format(valoresTipo.get(tipo)));
+					((DefaultListModel<String>)this.taxasList.getModel()).addElement(this.decFormat.format(taxasTipo.get(tipo)));
+				}
+				
+				this.txtTaxaCartao.setText(this.decFormat.format(taxa));*/
 			} catch (ParseException e) {
 				e.printStackTrace();
 			}
@@ -404,7 +484,7 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 							double taxaValor = valor * (tipo.getTaxa()/100);
 							
 							valoresTipo.put(tipo.getNome(), valoresTipo.get(tipo.getNome()) + valor);
-							taxasTipo.put(tipo.getNome(), taxaValor);
+							taxasTipo.put(tipo.getNome(), taxasTipo.get(tipo.getNome()) + taxaValor);
 							
 							taxa += taxaValor;
 						}
