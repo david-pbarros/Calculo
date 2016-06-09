@@ -2,6 +2,7 @@ package br.com.dbcorp.calculo;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -14,8 +15,10 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,11 +42,18 @@ import com.jgoodies.forms.layout.RowSpec;
 import br.com.dbcorp.calculo.cartao.Maquina;
 import br.com.dbcorp.calculo.cartao.Maquinas;
 import br.com.dbcorp.calculo.cartao.Tipo;
-import java.awt.Font;
 
 public class InicialUI extends InternalUI implements FocusListener, ActionListener, KeyListener, ItemListener {
 	private static final long serialVersionUID = 7068067565699504965L;
 	
+	private JTextField txTotalPeriodo;
+	private JTextField txTotalDinheiroPeriodo;
+	private JTextField txTotalCartaoPeriodo;
+	private JList<String> vlTpCartaoListPeriodo;
+	private JList<String> taxasListPeriodo;
+	private JList<Integer> qtdCartaoListPeriodo;
+	private JList<String> tpCartaoListPeriodo;
+
 	private JTextField txTotal;
 	private JTextField txTotalDinheiro;
 	private JTextField txTotalCartao;
@@ -68,6 +78,7 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 
 	private JComboBox<String> cbMaquina;
 	private JComboBox<String> cbTipoCartao;
+	private JComboBox<String> cbPeriodo;
 	
 	private JButton btnRemoverCar;
 	private JButton btnAddSub;
@@ -87,14 +98,20 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 	private Map<JTextField, JLabel> paraMil;
 	private Map<JTextField, Double> campoValor;
 	
+	private List<Periodo> periodos;
+	private Periodo periodoSelecionado;
+	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public InicialUI() {
 		this.setPreferredSize(new Dimension(824, 768));
 		
-		getContentPane();
 		getContentPane().setLayout(new BorderLayout(0, 0));
 		
 		this.decFormat = new DecimalFormat("##,##0.00");
+		
+		this.periodos = new ArrayList<>();
+		this.periodos.add(new Periodo());
+		this.periodos.add(new Periodo());
 		
 		this.preparaCartoes();
 		
@@ -110,9 +127,27 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 			}
 		}
 		
+		JPanel headPanel = new JPanel();
+		headPanel.setLayout(new FormLayout(new ColumnSpec[] {
+				FormSpecs.RELATED_GAP_COLSPEC,
+				FormSpecs.DEFAULT_COLSPEC,
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("center:default"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(378dlu;default):grow"),},
+			new RowSpec[] {
+				RowSpec.decode("default:grow"),
+				FormSpecs.RELATED_GAP_ROWSPEC,
+				RowSpec.decode("default:grow"),
+				FormSpecs.RELATED_GAP_ROWSPEC,
+				RowSpec.decode("default:grow"),}));
+		
+		String[] pediodo = {"Manhã", "Tarde"};
+		this.cbPeriodo = new JComboBox<>(pediodo);
+		this.cbPeriodo.addItemListener(this);
+		
 		JPanel totaisPanel = new JPanel();
-		totaisPanel.setBorder(new TitledBorder(null, "Totais", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		getContentPane().add(totaisPanel, BorderLayout.NORTH);
+		totaisPanel.setBorder(new TitledBorder(null, "Totais Gerais", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		totaisPanel.setLayout(new FormLayout(new ColumnSpec[] {
 				FormSpecs.RELATED_GAP_COLSPEC,
 				FormSpecs.DEFAULT_COLSPEC,
@@ -132,6 +167,8 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 				FormSpecs.DEFAULT_ROWSPEC,
 				FormSpecs.RELATED_GAP_ROWSPEC,
 				RowSpec.decode("default:grow"),}));
+		
+		
 		
 		this.txTotal = new JTextField("0,00");
 		this.txTotalDinheiro = new JTextField("0,00");
@@ -158,10 +195,63 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		totaisPanel.add(this.taxasList, "8, 4, fill, fill");
 		totaisPanel.add(new JLabel("Qtd. Cart\u00F5es:"), "10, 4, right, default");
 		totaisPanel.add(this.qtdCartaoList, "12, 4, fill, fill");
+		///// fim totais gerais
+		
+		JPanel totaisPeriodoPanel = new JPanel();
+		totaisPeriodoPanel.setBorder(new TitledBorder(null, "Totais Período", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		totaisPeriodoPanel.setLayout(new FormLayout(new ColumnSpec[] {
+				FormSpecs.RELATED_GAP_COLSPEC,
+				FormSpecs.DEFAULT_COLSPEC,
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("default:grow"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				FormSpecs.DEFAULT_COLSPEC,
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("default:grow"),
+				FormSpecs.RELATED_GAP_COLSPEC,
+				FormSpecs.DEFAULT_COLSPEC,
+				FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("default:grow"),
+				FormSpecs.RELATED_GAP_COLSPEC,},
+			new RowSpec[] {
+				FormSpecs.RELATED_GAP_ROWSPEC,
+				FormSpecs.DEFAULT_ROWSPEC,
+				FormSpecs.RELATED_GAP_ROWSPEC,
+				RowSpec.decode("default:grow"),}));
+		
+		this.txTotalPeriodo = new JTextField("0,00");
+		this.txTotalDinheiroPeriodo = new JTextField("0,00");
+		this.txTotalCartaoPeriodo = new JTextField("0,00");
+		this.vlTpCartaoListPeriodo = new JList(new DefaultListModel<String>());
+		this.taxasListPeriodo = new JList(new DefaultListModel<String>());
+		this.qtdCartaoListPeriodo = new JList(new DefaultListModel<Integer>());
+		this.tpCartaoListPeriodo = new JList(this.tiposCartoes.toArray());
+
+		this.txTotalPeriodo.setEditable(false);
+		this.txTotalDinheiroPeriodo.setEditable(false);
+		this.txTotalCartaoPeriodo.setEditable(false);
+		this.tpCartaoListPeriodo.setEnabled(false);
+		
+		totaisPeriodoPanel.add(new JLabel("Total Geral:"), "2, 2, right, default");
+		totaisPeriodoPanel.add(this.txTotalPeriodo, "4, 2, fill, default");
+		totaisPeriodoPanel.add(new JLabel("Total Dinheiro"), "6, 2, right, default");
+		totaisPeriodoPanel.add(this.txTotalDinheiroPeriodo, "8, 2, fill, default");
+		totaisPeriodoPanel.add(new JLabel("Total Cart\u00E3o:"), "10, 2, right, default");
+		totaisPeriodoPanel.add(this.txTotalCartaoPeriodo, "12, 2, fill, default");
+		totaisPeriodoPanel.add(this.tpCartaoListPeriodo, "2, 4, right, fill");
+		totaisPeriodoPanel.add(this.vlTpCartaoListPeriodo, "4, 4, fill, fill");
+		totaisPeriodoPanel.add(new JLabel("Taxas:"), "6, 4, right, default");
+		totaisPeriodoPanel.add(this.taxasListPeriodo, "8, 4, fill, fill");
+		totaisPeriodoPanel.add(new JLabel("Qtd. Cart\u00F5es:"), "10, 4, right, default");
+		totaisPeriodoPanel.add(this.qtdCartaoListPeriodo, "12, 4, fill, fill");
+		
+		headPanel.add(totaisPeriodoPanel, "1, 5, 6, 1, fill, fill");
+		headPanel.add(totaisPanel, "1, 1, 6, 1, fill, default");
+		headPanel.add(new JLabel("Per\u00EDodo:"), "2, 3, right, default");
+		headPanel.add(this.cbPeriodo, "4, 3, fill, default");
 		
 		JPanel cartaoPanel = new JPanel();
 		cartaoPanel.setBorder(new TitledBorder(null, "Cart\u00E3o", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		getContentPane().add(cartaoPanel, BorderLayout.WEST);
 		cartaoPanel.setLayout(new FormLayout(new ColumnSpec[] {
 				FormSpecs.RELATED_GAP_COLSPEC,
 				FormSpecs.DEFAULT_COLSPEC,
@@ -201,7 +291,6 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		
 		JPanel dinheiroPanel = new JPanel();
 		dinheiroPanel.setBorder(new TitledBorder(null, "Dinheiro", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		getContentPane().add(dinheiroPanel, BorderLayout.CENTER);
 		dinheiroPanel.setLayout(new FormLayout(new ColumnSpec[] {
 				FormSpecs.RELATED_GAP_COLSPEC,
 				FormSpecs.DEFAULT_COLSPEC,
@@ -499,6 +588,14 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		dinheiroPanel.add(notaPanel, "2, 14, 11, 1, fill, fill");
 		dinheiroPanel.add(milPanel, "2, 16, 11, 1, fill, fill");
 		
+		this.setPeriodo();
+		
+		this.inicializaListaCartoes();
+		
+		getContentPane().add(headPanel, BorderLayout.NORTH);
+		getContentPane().add(cartaoPanel, BorderLayout.WEST);
+		getContentPane().add(dinheiroPanel, BorderLayout.CENTER);
+		
 		setVisible(true);
 	}
 
@@ -545,9 +642,13 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		if (event.getSource() == this.btnAddSub) {
 			this.totalDinheiro += subTotal;
 			this.totalGeral += subTotal;
+			this.periodoSelecionado.setTotDinheiro(this.periodoSelecionado.getTotDinheiro() + subTotal);
+			this.periodoSelecionado.setTotGeral(this.periodoSelecionado.getTotGeral() + subTotal);
 			
 			this.txTotalDinheiro.setText(this.decFormat.format(this.totalDinheiro));
 			this.txTotal.setText(this.decFormat.format(this.totalGeral));
+			this.txTotalDinheiroPeriodo.setText(this.decFormat.format(this.periodoSelecionado.getTotDinheiro()));
+			this.txTotalPeriodo.setText(this.decFormat.format(this.periodoSelecionado.getTotGeral()));
 			
 			for (JTextField field : this.porValor.keySet()) {
 				Integer total = Integer.parseInt(this.porValor.get(field).getText()) + Integer.parseInt(field.getText());
@@ -560,9 +661,13 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		} else if (event.getSource() == this.btnRemover) {
 			this.totalDinheiro -= subTotal;
 			this.totalGeral -= subTotal;
+			this.periodoSelecionado.setTotDinheiro(this.periodoSelecionado.getTotDinheiro() - subTotal);
+			this.periodoSelecionado.setTotGeral(this.periodoSelecionado.getTotGeral() - subTotal);
 			
 			this.txTotalDinheiro.setText(this.decFormat.format(this.totalDinheiro));
 			this.txTotal.setText(this.decFormat.format(this.totalGeral));
+			this.txTotalDinheiroPeriodo.setText(this.decFormat.format(this.periodoSelecionado.getTotDinheiro()));
+			this.txTotalPeriodo.setText(this.decFormat.format(this.periodoSelecionado.getTotGeral()));
 			
 			for (JTextField field : this.porValor.keySet()) {
 				Integer total = Integer.parseInt(this.porValor.get(field).getText()) - Integer.parseInt(field.getText());
@@ -585,14 +690,74 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 				
 				this.totalCartao += cartao;
 				this.totalGeral += cartao;
+				this.periodoSelecionado.setTotCartao(this.periodoSelecionado.getTotCartao() + cartao);
+				this.periodoSelecionado.setTotGeral(this.periodoSelecionado.getTotGeral() + cartao);
 				
 				((DefaultListModel<String>) this.cartaoList.getModel()).addElement(this.decFormat.format(cartao));
 				
 				this.txCartao.setText("");
 				this.txTotalCartao.setText(this.decFormat.format(this.totalCartao));
 				this.txTotal.setText(this.decFormat.format(this.totalGeral));
+				this.txTotalCartaoPeriodo.setText(this.decFormat.format(this.periodoSelecionado.getTotCartao()));
+				this.txTotalPeriodo.setText(this.decFormat.format(this.periodoSelecionado.getTotGeral()));
 				
-				Double taxa = 0d;
+				int index = 0;
+				Tipo tipo = null;
+				
+				for (int i = 0; i < this.maquinaSelecionada.getTipos().size(); i++) {
+					if (this.cbTipoCartao.getSelectedItem().equals(this.maquinaSelecionada.getTipos().get(i).getNome())) {
+						tipo = this.maquinaSelecionada.getTipos().get(i);
+						
+						for (; index < this.tpCartaoList.getModel().getSize(); index++) {
+							if (tipo.getNome().equals(this.tpCartaoList.getModel().getElementAt(index))) {
+								break;
+							}
+						}
+						
+						break;
+					}
+				}
+				
+				if (tipo != null) {
+					double taxaValor = cartao * (tipo.getTaxa()/100);
+					
+					if (this.periodoSelecionado.getValoresTipo().get(tipo.getNome()) == null) {
+						this.periodoSelecionado.getValoresTipo().put(tipo.getNome(), 0d);
+					}
+					
+					if (this.periodoSelecionado.getTaxasTipo().get(tipo.getNome()) == null) {
+						this.periodoSelecionado.getTaxasTipo().put(tipo.getNome(), 0d);
+					}
+					
+					if (this.periodoSelecionado.getQtdTipo().get(tipo.getNome()) == null) {
+						this.periodoSelecionado.getQtdTipo().put(tipo.getNome(), 0);
+					}
+					
+					this.periodoSelecionado.getValoresTipo().put(tipo.getNome(), this.periodoSelecionado.getValoresTipo().get(tipo.getNome()) + cartao);
+					this.periodoSelecionado.getTaxasTipo().put(tipo.getNome(), this.periodoSelecionado.getTaxasTipo().get(tipo.getNome()) + taxaValor);
+					this.periodoSelecionado.getQtdTipo().put(tipo.getNome(), this.periodoSelecionado.getQtdTipo().get(tipo.getNome()) + 1);
+					
+					double temp = this.decFormat.parse(this.vlTpCartaoList.getModel().getElementAt(index)).doubleValue() + cartao;
+					double temp2 = this.decFormat.parse(this.vlTpCartaoListPeriodo.getModel().getElementAt(index)).doubleValue() + cartao;
+					
+					((DefaultListModel<String>)this.vlTpCartaoList.getModel()).setElementAt(this.decFormat.format(temp), index);
+					((DefaultListModel<String>)this.vlTpCartaoListPeriodo.getModel()).setElementAt(this.decFormat.format(temp2), index);
+					
+					temp = this.decFormat.parse(this.taxasList.getModel().getElementAt(index)).doubleValue() + taxaValor;
+					temp2 = this.decFormat.parse(this.taxasListPeriodo.getModel().getElementAt(index)).doubleValue() + taxaValor;
+					
+					((DefaultListModel<String>)this.taxasList.getModel()).setElementAt(this.decFormat.format(temp), index);
+					((DefaultListModel<String>)this.taxasListPeriodo.getModel()).setElementAt(this.decFormat.format(temp2), index);
+					
+					((DefaultListModel<Integer>)this.qtdCartaoList.getModel()).setElementAt(this.qtdCartaoList.getModel().getElementAt(index) + 1, index);
+					((DefaultListModel<Integer>)this.qtdCartaoListPeriodo.getModel()).setElementAt(this.qtdCartaoListPeriodo.getModel().getElementAt(index) + 1, index);
+					
+					tipo.getListaValores().addElement(this.decFormat.format(cartao));
+				}
+				
+				
+				
+				/*Double taxa = 0d;
 				Map<String, Double> valoresTipo = new HashMap<>();
 				Map<String, Double> taxasTipo = new HashMap<>();
 				Map<String, Integer> qtdTipo = new HashMap<>();
@@ -626,7 +791,7 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 					((DefaultListModel<String>)this.vlTpCartaoList.getModel()).addElement(this.decFormat.format(valoresTipo.get(tipo)));
 					((DefaultListModel<String>)this.taxasList.getModel()).addElement(this.decFormat.format(taxasTipo.get(tipo)));
 					((DefaultListModel<Integer>)this.qtdCartaoList.getModel()).addElement(qtdTipo.get(tipo));
-				}
+				}*/
 			} catch (ParseException e) {
 				e.printStackTrace();
 			}
@@ -651,6 +816,9 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 			if (tipo != null) {
 				this.cartaoList.setModel(tipo.getListaValores());
 			}
+		} else if (event.getSource() == this.cbPeriodo) {
+			this.setPeriodo();
+			selecaoMaquina();
 		}
 	}
 
@@ -690,18 +858,28 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 			Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
 			this.maquinas = (Maquinas) jaxbUnmarshaller.unmarshal(file);
 			
+			for (int i = 0; i < this.periodos.size(); i++) {
+				this.periodos.get(i).setMaquinas((Maquinas) jaxbUnmarshaller.unmarshal(file));
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
 	private void selecaoMaquina() {
-		for (Maquina temp : this.maquinas.getMaquina()) {
+		for (Maquina temp : this.periodoSelecionado.getMaquinas().getMaquina()) {
 			if (temp.getNome().equals(this.cbMaquina.getSelectedItem())) {
 				this.maquinaSelecionada = temp;
 				break;
 			}
 		}
+		
+		/*for (Maquina temp : this.maquinas.getMaquina()) {
+			if (temp.getNome().equals(this.cbMaquina.getSelectedItem())) {
+				this.maquinaSelecionada = temp;
+				break;
+			}
+		}*/
 		
 		if (this.maquinaSelecionada != null) {
 			this.cbTipoCartao.removeAllItems();
@@ -721,9 +899,13 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 			
 			this.totalCartao -= cartao;
 			this.totalGeral -= cartao;
+			this.periodoSelecionado.setTotCartao(this.periodoSelecionado.getTotCartao() - cartao);
+			this.periodoSelecionado.setTotGeral(this.periodoSelecionado.getTotGeral() - cartao);
 			
 			this.txTotalCartao.setText(this.decFormat.format(this.totalCartao));
 			this.txTotal.setText(this.decFormat.format(this.totalGeral));
+			this.txTotalCartaoPeriodo.setText(this.decFormat.format(this.periodoSelecionado.getTotCartao()));
+			this.txTotalPeriodo.setText(this.decFormat.format(this.periodoSelecionado.getTotGeral()));
 			
 			int index = 0;
 			Tipo tipo = null;
@@ -746,18 +928,71 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 				double taxaValor = cartao * (tipo.getTaxa()/100);
 				
 				double temp = this.decFormat.parse(this.vlTpCartaoList.getModel().getElementAt(index)).doubleValue() - cartao;
+				double temp2 = this.decFormat.parse(this.vlTpCartaoListPeriodo.getModel().getElementAt(index)).doubleValue() - cartao;
 				
 				((DefaultListModel<String>)this.vlTpCartaoList.getModel()).setElementAt(this.decFormat.format(temp), index);
+				((DefaultListModel<String>)this.vlTpCartaoListPeriodo.getModel()).setElementAt(this.decFormat.format(temp2), index);
 				
 				temp = this.decFormat.parse(this.taxasList.getModel().getElementAt(index)).doubleValue() - taxaValor;
+				temp2 = this.decFormat.parse(this.taxasListPeriodo.getModel().getElementAt(index)).doubleValue() - taxaValor;
 				
 				((DefaultListModel<String>)this.taxasList.getModel()).setElementAt(this.decFormat.format(temp), index);
+				((DefaultListModel<String>)this.taxasListPeriodo.getModel()).setElementAt(this.decFormat.format(temp2), index);
 				
 				((DefaultListModel<Integer>)this.qtdCartaoList.getModel()).setElementAt(this.qtdCartaoList.getModel().getElementAt(index) - 1, index);
-
+				((DefaultListModel<Integer>)this.qtdCartaoListPeriodo.getModel()).setElementAt(this.qtdCartaoListPeriodo.getModel().getElementAt(index) - 1, index);
+				
+				this.periodoSelecionado.getValoresTipo().put(tipo.getNome(), this.periodoSelecionado.getValoresTipo().get(tipo.getNome()) - cartao);
+				this.periodoSelecionado.getTaxasTipo().put(tipo.getNome(), this.periodoSelecionado.getTaxasTipo().get(tipo.getNome()) - taxaValor);
+				this.periodoSelecionado.getQtdTipo().put(tipo.getNome(), this.periodoSelecionado.getQtdTipo().get(tipo.getNome()) - 1);
 			}
 		} catch (ParseException e) {
 			e.printStackTrace();
+		}
+	}
+	
+	private void setPeriodo() {
+		this.periodoSelecionado = this.periodos.get(this.cbPeriodo.getSelectedIndex());
+		
+		this.txTotalDinheiroPeriodo.setText(this.decFormat.format(this.periodoSelecionado.getTotDinheiro()));
+		this.txTotalPeriodo.setText(this.decFormat.format(this.periodoSelecionado.getTotGeral()));
+		this.txTotalCartaoPeriodo.setText(this.decFormat.format(this.periodoSelecionado.getTotCartao()));
+		
+		((DefaultListModel<String>)this.vlTpCartaoListPeriodo.getModel()).removeAllElements();
+		((DefaultListModel<String>)this.taxasListPeriodo.getModel()).removeAllElements();
+		((DefaultListModel<Integer>)this.qtdCartaoListPeriodo.getModel()).removeAllElements();
+		((DefaultListModel<String>)this.cartaoList.getModel()).removeAllElements();
+		
+		for (String tipo : this.tiposCartoes) {
+			
+			if (this.periodoSelecionado.getValoresTipo().get(tipo) != null) {
+				((DefaultListModel<String>)this.vlTpCartaoListPeriodo.getModel()).addElement(this.decFormat.format(this.periodoSelecionado.getValoresTipo().get(tipo)));
+			
+			} else {
+				((DefaultListModel<String>)this.vlTpCartaoListPeriodo.getModel()).addElement("0,00");
+			}
+			
+			if (this.periodoSelecionado.getTaxasTipo().get(tipo) != null) {
+				((DefaultListModel<String>)this.taxasListPeriodo.getModel()).addElement(this.decFormat.format(this.periodoSelecionado.getTaxasTipo().get(tipo)));
+			
+			} else {
+				((DefaultListModel<String>)this.taxasListPeriodo.getModel()).addElement("0,00");
+			}
+	
+			if (this.periodoSelecionado.getQtdTipo().get(tipo) != null) {
+				((DefaultListModel<Integer>)this.qtdCartaoListPeriodo.getModel()).addElement(this.periodoSelecionado.getQtdTipo().get(tipo));
+			
+			} else {
+				((DefaultListModel<Integer>)this.qtdCartaoListPeriodo.getModel()).addElement(0);
+			}
+		}
+	}
+	
+	private void inicializaListaCartoes() {
+		for (int i = 0; i < this.tpCartaoList.getModel().getSize(); i++) {
+			((DefaultListModel<String>)this.vlTpCartaoList.getModel()).addElement("0,00");
+			((DefaultListModel<String>)this.taxasList.getModel()).addElement("0,00");
+			((DefaultListModel<Integer>)this.qtdCartaoList.getModel()).addElement(0);
 		}
 	}
 }
