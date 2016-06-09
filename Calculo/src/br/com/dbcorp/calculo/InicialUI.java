@@ -64,6 +64,7 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 	private JList<String> tpCartaoList;
 	private JList<String> vlTpCartaoList;
 	private JList<String> taxasList;
+	private JList<Integer> qtdCartaoList;
 
 	private JComboBox<String> cbMaquina;
 	private JComboBox<String> cbTipoCartao;
@@ -81,7 +82,6 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 	private Maquinas maquinas;
 	private Maquina maquinaSelecionada;
 	private Set<String> tiposCartoes;
-	private JTextField txtTaxaCartao;
 	
 	private Map<JTextField, JLabel> porValor;
 	private Map<JTextField, JLabel> paraMil;
@@ -139,13 +139,12 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		this.tpCartaoList = new JList(this.tiposCartoes.toArray());
 		this.vlTpCartaoList = new JList(new DefaultListModel<String>());
 		this.taxasList = new JList(new DefaultListModel<String>());
-		this.txtTaxaCartao = new JTextField();
+		this.qtdCartaoList = new JList(new DefaultListModel<Integer>());
 
 		this.txTotal.setEditable(false);
 		this.txTotalDinheiro.setEditable(false);
 		this.txTotalCartao.setEditable(false);
 		this.tpCartaoList.setEnabled(false);
-		this.txtTaxaCartao.setEditable(false);
 		
 		totaisPanel.add(new JLabel("Total Geral:"), "2, 2, right, default");
 		totaisPanel.add(this.txTotal, "4, 2, fill, default");
@@ -157,8 +156,8 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		totaisPanel.add(this.vlTpCartaoList, "4, 4, fill, fill");
 		totaisPanel.add(new JLabel("Taxas:"), "6, 4, right, default");
 		totaisPanel.add(this.taxasList, "8, 4, fill, fill");
-		totaisPanel.add(new JLabel("Total Tx. Cart:"), "10, 4, right, default");
-		totaisPanel.add(this.txtTaxaCartao, "12, 4, fill, default");
+		totaisPanel.add(new JLabel("Qtd. Cart\u00F5es:"), "10, 4, right, default");
+		totaisPanel.add(this.qtdCartaoList, "12, 4, fill, fill");
 		
 		JPanel cartaoPanel = new JPanel();
 		cartaoPanel.setBorder(new TitledBorder(null, "Cart\u00E3o", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -596,12 +595,14 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 				Double taxa = 0d;
 				Map<String, Double> valoresTipo = new HashMap<>();
 				Map<String, Double> taxasTipo = new HashMap<>();
+				Map<String, Integer> qtdTipo = new HashMap<>();
 				
 				for (Maquina maquina : this.maquinas.getMaquina()) {
 					for (Tipo tipo : maquina.getTipos()) {
 						if (!valoresTipo.containsKey(tipo.getNome())) {
 							valoresTipo.put(tipo.getNome(), 0d);
 							taxasTipo.put(tipo.getNome(), 0d);
+							qtdTipo.put(tipo.getNome(), 0);
 						}
 						
 						for (int i = 0; i < tipo.getListaValores().size(); i++) {
@@ -610,6 +611,7 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 							
 							valoresTipo.put(tipo.getNome(), valoresTipo.get(tipo.getNome()) + valor);
 							taxasTipo.put(tipo.getNome(), taxasTipo.get(tipo.getNome()) + taxaValor);
+							qtdTipo.put(tipo.getNome(), qtdTipo.get(tipo.getNome()) + 1);
 							
 							taxa += taxaValor;
 						}
@@ -618,14 +620,13 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 				
 				((DefaultListModel<String>)this.vlTpCartaoList.getModel()).removeAllElements();
 				((DefaultListModel<String>)this.taxasList.getModel()).removeAllElements();
+				((DefaultListModel<Integer>)this.qtdCartaoList.getModel()).removeAllElements();
 				
 				for (String tipo : this.tiposCartoes) {
 					((DefaultListModel<String>)this.vlTpCartaoList.getModel()).addElement(this.decFormat.format(valoresTipo.get(tipo)));
 					((DefaultListModel<String>)this.taxasList.getModel()).addElement(this.decFormat.format(taxasTipo.get(tipo)));
+					((DefaultListModel<Integer>)this.qtdCartaoList.getModel()).addElement(qtdTipo.get(tipo));
 				}
-				
-				this.txtTaxaCartao.setText(this.decFormat.format(taxa));
-				
 			} catch (ParseException e) {
 				e.printStackTrace();
 			}
@@ -752,7 +753,8 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 				
 				((DefaultListModel<String>)this.taxasList.getModel()).setElementAt(this.decFormat.format(temp), index);
 				
-				this.txtTaxaCartao.setText(this.decFormat.format(this.decFormat.parse(this.txtTaxaCartao.getText()).doubleValue() - taxaValor));
+				((DefaultListModel<Integer>)this.qtdCartaoList.getModel()).setElementAt(this.qtdCartaoList.getModel().getElementAt(index) - 1, index);
+
 			}
 		} catch (ParseException e) {
 			e.printStackTrace();
