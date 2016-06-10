@@ -90,7 +90,6 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 	
 	private DecimalFormat decFormat;
 	
-	private Maquinas maquinas;
 	private Maquina maquinaSelecionada;
 	private Set<String> tiposCartoes;
 	
@@ -116,13 +115,13 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		this.preparaCartoes();
 		
 		this.tiposCartoes = new HashSet<>();
-		String[] nomeMaquina = new String[this.maquinas.getMaquina().size()+1];
+		String[] nomeMaquina = new String[this.periodos.get(0).getMaquinas().getMaquina().size()+1];
 		nomeMaquina[0] = "Selecione...";
 		
-		for (int i = 0; i < this.maquinas.getMaquina().size(); i++) {
-			nomeMaquina[i + 1] = this.maquinas.getMaquina().get(i).getNome();
+		for (int i = 0; i < this.periodos.get(0).getMaquinas().getMaquina().size(); i++) {
+			nomeMaquina[i + 1] = this.periodos.get(0).getMaquinas().getMaquina().get(i).getNome();
 			
-			for (Tipo tipo : this.maquinas.getMaquina().get(i).getTipos()) {
+			for (Tipo tipo : this.periodos.get(0).getMaquinas().getMaquina().get(i).getTipos()) {
 				this.tiposCartoes.add(tipo.getNome());
 			}
 		}
@@ -751,8 +750,6 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 					
 					((DefaultListModel<Integer>)this.qtdCartaoList.getModel()).setElementAt(this.qtdCartaoList.getModel().getElementAt(index) + 1, index);
 					((DefaultListModel<Integer>)this.qtdCartaoListPeriodo.getModel()).setElementAt(this.qtdCartaoListPeriodo.getModel().getElementAt(index) + 1, index);
-					
-					tipo.getListaValores().addElement(this.decFormat.format(cartao));
 				}
 				
 				
@@ -815,6 +812,8 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 			
 			if (tipo != null) {
 				this.cartaoList.setModel(tipo.getListaValores());
+			} else {
+				this.cartaoList.setModel(new DefaultListModel<String>());
 			}
 		} else if (event.getSource() == this.cbPeriodo) {
 			this.setPeriodo();
@@ -856,7 +855,6 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 			JAXBContext jaxbContext = JAXBContext.newInstance(Maquinas.class);
 			
 			Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-			this.maquinas = (Maquinas) jaxbUnmarshaller.unmarshal(file);
 			
 			for (int i = 0; i < this.periodos.size(); i++) {
 				this.periodos.get(i).setMaquinas((Maquinas) jaxbUnmarshaller.unmarshal(file));
@@ -961,7 +959,7 @@ public class InicialUI extends InternalUI implements FocusListener, ActionListen
 		((DefaultListModel<String>)this.vlTpCartaoListPeriodo.getModel()).removeAllElements();
 		((DefaultListModel<String>)this.taxasListPeriodo.getModel()).removeAllElements();
 		((DefaultListModel<Integer>)this.qtdCartaoListPeriodo.getModel()).removeAllElements();
-		((DefaultListModel<String>)this.cartaoList.getModel()).removeAllElements();
+		//((DefaultListModel<String>)this.cartaoList.getModel()).removeAllElements();
 		
 		for (String tipo : this.tiposCartoes) {
 			
